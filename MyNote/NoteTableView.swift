@@ -16,6 +16,7 @@ class NoteTableView: UITableViewController
     
     
     var firstLoad = true
+    var selectedNote: Note? = nil
     
     func nonDeletedNotes() -> [Note]
     {
@@ -107,17 +108,35 @@ class NoteTableView: UITableViewController
     
     override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
             let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { (_, _, completionHandler) in
-                // Delete the note at the current index path
+                // Delete the current note 
                 let noteToDelete = self.nonDeletedNotes()[indexPath.row]
-                // ... (Your code to delete the note from Core Data)
-                noteList.remove(at: noteList.firstIndex(of: noteToDelete)!)
-                // Reload data to reflect the deletion
-                self.tableView.reloadData()
+                self.DeleteNote(noteToDelete)
                 completionHandler(true)
             }
             deleteAction.image = UIImage(systemName: "trash.fill")
             let configuration = UISwipeActionsConfiguration(actions: [deleteAction])
             return configuration
         }
+
+        func DeleteNote(_ noteToDelete: Note) {
+            let appDelegate = UIApplication.shared.delegate as! AppDelegate
+            let context: NSManagedObjectContext = appDelegate.persistentContainer.viewContext
+            // Set the deletion date for the selected note
+            noteToDelete.deletedDate = Date()
+            do {
+                
+                try context.save()
+                // Remove the note from the local list
+                if let index = noteList.firstIndex(of: noteToDelete) {
+                    noteList.remove(at: index)
+                }
+                
+                self.tableView.reloadData()
+            } catch {
+                print("Error saving context: \(error)")
+            }
+        }
+    
+    
     
 }
